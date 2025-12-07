@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AddPlaceRequestBody {
-    public WebsiteDetails addPlaceReqBody(){
+    public WebsiteDetails addPlaceReqBody(String name, String phone_number, String address){
         WebsiteDetails bodyData = new WebsiteDetails();
         bodyData.setAccuracy(50);
-        bodyData.setName("Frontline house");
-        bodyData.setPhoneNumber("(+91) 983 893 3937");
-        bodyData.setAddress("29, side layout, cohen 09");
+        bodyData.setName(name);
+        bodyData.setPhoneNumber(phone_number);
+        bodyData.setAddress(address);
         bodyData.setWebsite("http://google.com");
         bodyData.setLanguage("French-IN");
 

@@ -15,46 +15,36 @@ import io.restassured.specification.ResponseSpecification;
 import org.testng.Assert;
 import pojo.LocationInfo;
 import pojo.WebsiteDetails;
+import resources.APIResources;
 import resources.AddPlaceRequestBody;
+import resources.Utils;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
 
-public class PlaceValidationsStepDef extends AddPlaceRequestBody {
+public class PlaceValidationsStepDef extends Utils {
 
     RequestSpecification reqSpec;
     ResponseSpecification responseSpec;
     Response response;
 
-    @Given("user adds Place payload")
-    public void addPlacePayload(){
+    AddPlaceRequestBody body =new AddPlaceRequestBody();
 
+    String place_id;
+
+    @Given("user adds Place payload with {string} {string} {string}")
+    public void addPlacePayload(String name, String phone_number, String address) throws IOException {
         //now, instead of the body, we can send the bodyData object and it will serialize it into the expected Json on its own
+        reqSpec = given().spec(requestSpecification()).body(body.addPlaceReqBody(name, phone_number, address));
 
-        //Doing RequestSpecBuilder
-        //This will include the baseURI and all other things we give in given() except .body
-        //we need to create a new object of RequestSpecBuilder
-        //need to give .build() for it to build it to the specBuilder type
-        //given()
-        RestAssured.useRelaxedHTTPSValidation();
-        RequestSpecification requestSpec = new RequestSpecBuilder()
-                .setBaseUri("https://rahulshettyacademy.com")
-                .addQueryParam("key","qaclick123")
-                .setContentType(ContentType.JSON)
-                .build();
-        reqSpec = given().spec(requestSpec).body(addPlaceReqBody()).log().body();
-        responseSpec = new ResponseSpecBuilder().expectStatusCode(200).expectContentType(ContentType.JSON).build();
     }
-    @When("user calls AddPlaceAPI with post http request")
-    public void addPlaceAPICall() {
-        response = reqSpec.when().post("maps/api/place/add/json").then().log().status().log().body().spec(responseSpec).extract().response();
-
-        System.out.println("Response Body: " + response.asString());
-        System.out.println("Status Code: " + response.getStatusCode());
-        System.out.println("Content-Type: " + response.getContentType());
-
+    @When("user calls {string} with post http request")
+    public void placeAPICall(String resource) {
+         response = reqSpec.when().post(APIResources.endPointOf(resource));
     }
     @Then("gets statusCode as {int} in response body")
     public void getsStatusCodeAsInResponseBody(int statusCode) {
@@ -64,10 +54,18 @@ public class PlaceValidationsStepDef extends AddPlaceRequestBody {
 
     @And("gets {string} as {string} in response body")
     public void getsAsInResponseBody(String actualResult, String expectedResult) {
-        String addPlaceResponse = response.asString();
-        System.out.println(addPlaceResponse);
-        JsonPath js = new JsonPath(addPlaceResponse);
-        Assert.assertEquals(js.getString(actualResult),expectedResult);
+
+        Assert.assertEquals(jsonPath(response, actualResult),expectedResult);
     }
 
+    @And("user calls Get http request to verify if place_id response name matches post request {string} using {string}")
+    public void userCallsGetHttpRequestToVerifyIfPlace_idResponseNameMatchesPostRequestUsing(String arg0, String resource) throws IOException {
+
+        place_id = jsonPath(response, "place_id");
+        reqSpec = given().spec(requestSpecification()).queryParam("place_id", place_id);
+        response = reqSpec.get(APIResources.endPointOf(resource));
+        String getResponse = response.asString();
+        JsonPath js = new JsonPath(getResponse);
+        System.out.println(js.getString("name"));
+    }
 }
